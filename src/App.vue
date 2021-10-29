@@ -5,14 +5,14 @@
 </template>
 
 <script lang="ts">
-/* eslint-disable @typescript-eslint/no-this-alias */
+/* eslint-disable @typescript-eslint/no-this-alias,@typescript-eslint/no-explicit-any */
 import Vue from 'vue';
-import { init, generate } from './draw';
+import { init, generate } from './engine/init';
 
 export default Vue.extend({
     name: 'App',
     mounted() {
-        const self: any = this;
+        const self: any = this as any;
         self.$refs.canvas.width = document.documentElement.clientWidth;
         self.$refs.canvas.height = document.documentElement.clientHeight;
 

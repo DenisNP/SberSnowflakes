@@ -21,4 +21,34 @@ export default class Segment {
     public get len(): number {
         return Math.sqrt(this.xLen ** 2 + this.yLen ** 2);
     }
+
+    public distanceToPoint(p: Point): number {
+        const A = p.x - this.start.x;
+        const B = p.y - this.start.y;
+        const C = this.xLen;
+        const D = this.yLen;
+
+        const dot = A * C + B * D;
+        const lenSq = C * C + D * D;
+        let param = -1;
+        if (lenSq !== 0) param = dot / lenSq;
+
+        let xx;
+        let yy;
+
+        if (param < 0) {
+            xx = this.start.x;
+            yy = this.start.y;
+        } else if (param > 1) {
+            xx = this.end.x;
+            yy = this.end.y;
+        } else {
+            xx = this.start.x + param * C;
+            yy = this.start.y + param * D;
+        }
+
+        const dx = p.x - xx;
+        const dy = p.y - yy;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
 }

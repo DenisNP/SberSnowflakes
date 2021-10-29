@@ -4,31 +4,32 @@
     </div>
 </template>
 
-<script>
+<script lang="ts">
+/* eslint-disable @typescript-eslint/no-this-alias */
+import Vue from 'vue';
 import { init, generate } from './draw';
 
-export default {
+export default Vue.extend({
     name: 'App',
     mounted() {
-        this.$refs.canvas.width = document.documentElement.clientWidth;
-        this.$refs.canvas.height = document.documentElement.clientHeight;
+        const self: any = this;
+        self.$refs.canvas.width = document.documentElement.clientWidth;
+        self.$refs.canvas.height = document.documentElement.clientHeight;
 
         init();
         generate();
     },
-};
+});
 </script>
 
 <style>
-html, body {
+body {
     margin: 0;
     padding: 0;
 }
 
 #app {
     font-family: Avenir, Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
     text-align: center;
     margin: 0;
     padding: 0;

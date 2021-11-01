@@ -1,6 +1,6 @@
 import { initTopCutter, generateTop } from '@/engine/topCutter';
-import Point from '../models/Point';
-import Segment from '../models/Segment';
+import Point from './models/Point';
+import Segment from './models/Segment';
 import { calcSquare, drawSegment, getContext } from '@/engine/utils';
 
 let ctx: CanvasRenderingContext2D;

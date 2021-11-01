@@ -7,7 +7,7 @@
 <script lang="ts">
 /* eslint-disable @typescript-eslint/no-this-alias,@typescript-eslint/no-explicit-any */
 import Vue from 'vue';
-import { init, generate } from './engine/snowflake';
+import { init, generate } from './snowflake';
 
 export default Vue.extend({
     name: 'App',

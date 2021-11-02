@@ -7,4 +7,8 @@ export default class Point {
         this.x = _x;
         this.y = _y;
     }
+
+    public equals(p: Point) {
+        return this.x === p.x && this.y === p.y;
+    }
 }

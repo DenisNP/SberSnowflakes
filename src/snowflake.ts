@@ -14,16 +14,18 @@ let mw: number;
 let mh: number;
 let left: Segment;
 let right: Segment;
-const targetSquareRatio = 0.7;
+let minCutoutsCount: number;
 
 const segments: Segment[] = [];
 const cutouts: Cutout[] = [];
-let totalSquare: number;
+let cRatio: number;
 
-export const init = (): void => {
+export const init = (cutoutsRatio = 1.0, minCutouts = 4): void => {
     ctx = getContext();
     w = document.documentElement.clientWidth;
     h = document.documentElement.clientHeight;
+    cRatio = cutoutsRatio;
+    minCutoutsCount = minCutouts;
 };
 
 const startTriangle = (): void => {
@@ -44,37 +46,39 @@ const startTriangle = (): void => {
     right = new Segment(new Point(x + mw, y), new Point(w / 2, y + mh));
     segments.push(left, right);
     initTopCutter(left, right);
-    initCutoutGen(0.7, mw, Math.max(mw, mh));
-
-    totalSquare = calcSquare(left.start, left.end, right.start);
+    initCutoutGen(cRatio, mw, Math.max(mw, mh));
 };
 
 export const generate = (): void => {
-    // generate base and top
-    startTriangle();
-    const topSegments: Segment[] = generateTop();
+    let globalIterations = 10;
+    while (cutouts.length < minCutoutsCount && globalIterations-- > 0) {
+        // reset
+        segments.splice(0, segments.length);
+        cutouts.splice(0, cutouts.length);
 
-    // cut right segment
-    right.start = topSegments[topSegments.length - 1].end;
+        // generate base and top
+        startTriangle();
+        const topSegments: Segment[] = generateTop();
 
-    // add new segments
-    topSegments.forEach((s) => {
-        const sq = calcSquare(s.start, s.end, right.start);
-        totalSquare -= sq;
-        drawSegment(getContext(), s);
-    });
-    segments.splice(1, 0, ...topSegments);
+        // cut right segment
+        right.start = topSegments[topSegments.length - 1].end;
 
-    // generate cutouts
-    const startSquare = totalSquare;
-    let iters = 5000;
-    while (totalSquare > startSquare * targetSquareRatio && iters-- > 0 && segments.length > 0) {
-        const cutout = generateCutout(segments, cutouts);
-        if (cutout !== null) {
-            totalSquare -= cutout.square;
+        // add new segments
+        segments.splice(1, 0, ...topSegments);
+
+        // generate cutouts
+        let iters = 5000;
+        while (iters-- > 0 && segments.length > 0) {
+            const cutout = generateCutout(segments, cutouts);
+            if (cutout !== null) {
+                iters = 5000;
+            }
         }
     }
 
+    segments.forEach((s) => {
+        drawSegment(getContext(), s);
+    });
     cutouts.forEach((c) => {
         drawSegment(ctx, c.firstSeg, '#00FF00');
         drawSegment(ctx, c.secondSeg, '#00FF00');

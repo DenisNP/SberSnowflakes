@@ -16,7 +16,7 @@ export default Vue.extend({
         self.$refs.canvas.width = document.documentElement.clientWidth;
         self.$refs.canvas.height = document.documentElement.clientHeight;
 
-        init();
+        init(0.7, 3);
         generate();
     },
 });

@@ -2,26 +2,34 @@
     <div id="app">
         <canvas v-show="!finished" class="centered" id="canvas"/>
         <canvas v-show="finished" class="centered" ref="canvasFinal" id="canvasFinal"/>
-        <button class="next-btn" @click="next">»</button>
+        <div class="footer"/>
+        <button v-if="!finished" class="next-btn" @click="next">»</button>
     </div>
 </template>
 
 <script lang="ts">
-/* eslint-disable @typescript-eslint/no-this-alias,@typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+/* eslint-disable @typescript-eslint/no-this-alias,@typescript-eslint/no-explicit-any,
+@typescript-eslint/no-empty-function */
 import Vue from 'vue';
-import { init, generate, nextStep } from './snowflake';
+import { createAssistant, createSmartappDebugger } from '@sberdevices/assistant-client';
+import {
+    init, generate, nextStep,
+} from './snowflake';
 
 export default Vue.extend({
     name: 'App',
     data() {
         return {
             finished: false,
+            assistant: null,
         };
     },
     mounted() {
         const self: any = this as any;
         const topMargin = 40;
         const bottomMargin = 50;
+        let bottomInset = 144;
         const sideMargin = 20;
         const finalSize = Math.min(
             document.documentElement.clientWidth - sideMargin * 2,
@@ -30,14 +38,56 @@ export default Vue.extend({
         self.$refs.canvasFinal.width = finalSize;
         self.$refs.canvasFinal.height = finalSize;
 
-        init(0.7, 3, topMargin, bottomMargin);
-        generate();
+        // assistant client
+        try {
+            window.alert = function (t) {
+                console.log(`Alert: ${t}`);
+            };
+            const initialize = (getState: any) => {
+                if (process.env.NODE_ENV === 'development') {
+                    return createSmartappDebugger({
+                        token: process.env.VUE_APP_SALUTE_TOKEN,
+                        initPhrase: 'запусти вырежи снежинку',
+                        getState,
+                    });
+                }
+
+                // Только для среды production
+                return createAssistant({ getState });
+            };
+
+            // @ts-ignore
+            this.assistant = initialize(() => {
+            });
+            // @ts-ignore
+            this.assistant.on('data', (command) => {
+                if (command.type === 'insets') {
+                    let b = command.insets && command.insets.bottom;
+                    if (b) {
+                        const root = document.documentElement;
+                        if (b > 200) b = 144; // TODO await fix
+                        root.style.setProperty('--bottom-inset', `${b}px`);
+                        bottomInset = b;
+                    }
+
+                    this.run(topMargin, bottomMargin + bottomInset);
+                }
+            });
+        } catch (err) {
+            // ignore
+            this.run(topMargin, bottomMargin + bottomInset);
+        }
     },
     methods: {
         next() {
             if (!nextStep()) {
                 this.finished = true;
             }
+        },
+        run(topMargin: number, bottomMargin: number) {
+            // init main engine
+            init(1.5, 5, topMargin, bottomMargin);
+            generate();
         },
     },
 });
@@ -76,21 +126,21 @@ body, html {
 
 .next-btn {
     position: fixed;
-    width: 50px;
-    height: 50px;
+    width: 100px;
+    height: 100px;
     background-color: rgba(0, 0, 0, 0.76);
     color: white;
-    font-size: 30px;
+    font-size: 50px;
     /*font-weight: bold;*/
-    right: 10px;
-    bottom: 10px;
+    right: 50px;
+    bottom: calc(20px + var(--bottom-inset));
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
     text-align: center;
-    padding-left: 2px;
-    padding-bottom: 6px;
+    padding-left: 3px;
+    padding-bottom: 8px;
 }
 
 * {
@@ -103,7 +153,12 @@ body, html {
 }
 
 :root {
-    --bottom-inset: 150px;
+    --bottom-inset: 144px;
+}
+
+.footer {
+    width: 1px;
+    min-height: var(--bottom-inset);
 }
 
 button {

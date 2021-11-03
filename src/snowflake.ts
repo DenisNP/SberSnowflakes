@@ -14,7 +14,7 @@ let mw: number;
 let mh: number;
 let left: Segment;
 let right: Segment;
-const targetSquareRatio = 0.8;
+const targetSquareRatio = 0.7;
 
 const segments: Segment[] = [];
 const cutouts: Cutout[] = [];
@@ -44,7 +44,7 @@ const startTriangle = (): void => {
     right = new Segment(new Point(x + mw, y), new Point(w / 2, y + mh));
     segments.push(left, right);
     initTopCutter(left, right);
-    initCutoutGen(mw, Math.max(mw, mh));
+    initCutoutGen(0.7, mw, Math.max(mw, mh));
 
     totalSquare = calcSquare(left.start, left.end, right.start);
 };

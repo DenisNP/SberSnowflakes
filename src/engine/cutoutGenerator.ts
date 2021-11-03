@@ -8,9 +8,11 @@ import {
     randomPointWithEdge,
     toRad,
 } from '@/engine/utils';
+import Point from '@/models/Point';
 
 let margin: number;
 let innerMargin: number;
+let pointToSegmentMargin: number;
 let minEdgeSegmentLen: number;
 let maxEdgeSegmentLen: number;
 let minCutoutLength: number;
@@ -51,13 +53,22 @@ const shortestDist = (segments: Segment[], proj: Segment) => {
     return minDist;
 };
 
-export const initCutoutGen = (w: number, longest: number) => {
-    margin = w * 0.05;
-    innerMargin = margin * 2;
-    minEdgeSegmentLen = w * 0.08;
-    maxEdgeSegmentLen = w * 0.4;
-    minCutoutSq = w * w * 0.05;
-    maxCutoutSq = w * w * 0.1;
+// eslint-disable-next-line max-len
+const shortestDistBetweenPointAndSegments = (segments: Segment[], p: Point) => Math.min(...segments.map((s) => s.distanceToPoint(p)));
+
+// eslint-disable-next-line max-len
+const shortestDistBetweenPointsAndSegment = (s: Segment, points: Point[]) => Math.min(...points.map((p) => s.distanceToPoint(p)));
+
+// eslint-disable-next-line max-len
+export const initCutoutGen = (cutoutsRatio: number, w: number, longest: number) => {
+    const lessRatio = cutoutsRatio ** 0.25;
+    margin = (w * 0.08) / Math.sqrt(cutoutsRatio);
+    innerMargin = (margin * 2) / lessRatio;
+    pointToSegmentMargin = margin / lessRatio;
+    minEdgeSegmentLen = (w * 0.1) / cutoutsRatio;
+    maxEdgeSegmentLen = (w * 0.5) / cutoutsRatio;
+    minCutoutSq = (w * w * 0.04) / cutoutsRatio;
+    maxCutoutSq = (w * w * 0.1);
     maxProjection = longest * 2;
     minCutoutLength = minEdgeSegmentLen / 2;
 };
@@ -117,9 +128,48 @@ export const generateCutout = (segments: Segment[], cutouts: Cutout[]): Cutout |
     if (maxLen < minLen) return null;
 
     // generate length and segments
-    const cutoutLength = fromAngAndLen(centerPoint, slantAng * toRad, rand(minLen, maxLen));
-    const topSegment = new Segment(sideSegment.end, cutoutLength.end);
-    const bottomSegment = new Segment(sideSegment.start, cutoutLength.end);
+    let pointDistanceCheck = false;
+    let cutoutLength: number = rand(minLen, maxLen);
+    let cutoutMain: Segment = fromAngAndLen(centerPoint, slantAng * toRad, cutoutLength);
+    let topSegment: Segment | null = null;
+    let bottomSegment: Segment | null = null;
+
+    while (!pointDistanceCheck) {
+        if (cutoutLength < minLen) return null;
+
+        // check new point for distance with segments
+        const mainPoint = cutoutMain.end;
+        const minDistPS = shortestDistBetweenPointAndSegments(allSeg, mainPoint);
+        if (minDistPS < pointToSegmentMargin) {
+            cutoutLength -= pointToSegmentMargin;
+            cutoutMain = fromAngAndLen(centerPoint, slantAng * toRad, cutoutLength);
+        } else {
+            // check new segments for distance with points
+            const allPoints = segments
+                .filter((s) => s !== segment)
+                .map((s) => [s.start, s.end])
+                .flat()
+                .concat(cutouts.map((c) => c.firstSeg.end));
+
+            // create segments to check
+            topSegment = new Segment(sideSegment.end, cutoutMain.end);
+            bottomSegment = new Segment(sideSegment.start, cutoutMain.end);
+            const minDistSP = Math.min(
+                shortestDistBetweenPointsAndSegment(topSegment, allPoints),
+                shortestDistBetweenPointsAndSegment(bottomSegment, allPoints),
+            );
+
+            if (minDistSP < pointToSegmentMargin) {
+                cutoutLength -= pointToSegmentMargin;
+                cutoutMain = fromAngAndLen(centerPoint, slantAng * toRad, cutoutLength);
+            } else {
+                pointDistanceCheck = true;
+            }
+        }
+    }
+
+    topSegment = topSegment || new Segment(sideSegment.end, cutoutMain.end);
+    bottomSegment = bottomSegment || new Segment(sideSegment.start, cutoutMain.end);
 
     // cut segment and put new segment parts if they are long enough
     segments.splice(segmentIndex, 1);

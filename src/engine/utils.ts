@@ -47,9 +47,13 @@ export const intersect = (f: Segment, s: Segment): Point | null => {
     return null;
 };
 
+let canvasContext: CanvasRenderingContext2D;
+
 export const getContext = (): CanvasRenderingContext2D => {
+    if (canvasContext) return canvasContext;
     const canvas = <HTMLCanvasElement>document.getElementById('canvas');
-    return <CanvasRenderingContext2D>canvas.getContext('2d');
+    canvasContext = <CanvasRenderingContext2D>canvas.getContext('2d');
+    return canvasContext;
 };
 
 export const calcSquare = (p1: Point, p2: Point, p3: Point): number => {

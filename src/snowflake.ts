@@ -1,13 +1,15 @@
 import { initTopCutter, generateTop } from '@/engine/topCutter';
 import Point from './models/Point';
 import Segment from './models/Segment';
-import { calcSquare, drawSegment, getContext } from '@/engine/utils';
+import { getContext } from '@/engine/utils';
 import { generateCutout, initCutoutGen } from '@/engine/cutoutGenerator';
 import Cutout from '@/models/Cutout';
+import CutoutStep from '@/models/CutoutStep';
+import generateFullSnowflake from '@/engine/finalGenerator';
 
 let ctx: CanvasRenderingContext2D;
-const topMargin = 40;
-const bottomMargin = 40;
+let tm: number;
+let bm: number;
 let h: number;
 let w: number;
 let mw: number;
@@ -18,32 +20,45 @@ let minCutoutsCount: number;
 
 const segments: Segment[] = [];
 const cutouts: Cutout[] = [];
+const cutoutSteps: CutoutStep[] = [];
+let lastCutoutStep = 0;
 let cRatio: number;
 
-export const init = (cutoutsRatio = 1.0, minCutouts = 4): void => {
+export const init = (
+    cutoutsRatio = 1.0,
+    minCutouts = 4,
+    topMargin = 40,
+    bottomMargin = 50,
+): void => {
+    tm = topMargin;
+    bm = bottomMargin;
+
+    const canvas = <HTMLCanvasElement>document.getElementById('canvas');
+    w = document.documentElement.clientWidth * 2;
+    h = document.documentElement.clientHeight * 2;
+    mh = h - tm - bm;
+    mw = 2 * mh * Math.tan(Math.PI * 0.08333);
+    canvas.width = mw;
+    canvas.height = mh;
+
     ctx = getContext();
-    w = document.documentElement.clientWidth;
-    h = document.documentElement.clientHeight;
     cRatio = cutoutsRatio;
     minCutoutsCount = minCutouts;
 };
 
 const startTriangle = (): void => {
-    mh = h - topMargin - bottomMargin;
-    mw = 2 * mh * Math.tan(Math.PI * 0.08333);
-
-    const x = (w - mw) / 2;
-    const y = topMargin;
+    const x = 0;
+    const y = 0;
 
     ctx.fillStyle = '#ffffff';
     ctx.moveTo(x, y);
     ctx.lineTo(x + mw, y);
-    ctx.lineTo(w / 2, y + mh);
+    ctx.lineTo(mw / 2, y + mh);
     ctx.closePath();
     ctx.fill();
 
-    left = new Segment(new Point(w / 2, y + mh), new Point(x, y));
-    right = new Segment(new Point(x + mw, y), new Point(w / 2, y + mh));
+    left = new Segment(new Point(mw / 2, y + mh), new Point(x, y));
+    right = new Segment(new Point(x + mw, y), new Point(mw / 2, y + mh));
     segments.push(left, right);
     initTopCutter(left, right);
     initCutoutGen(cRatio, mw, Math.max(mw, mh));
@@ -55,10 +70,17 @@ export const generate = (): void => {
         // reset
         segments.splice(0, segments.length);
         cutouts.splice(0, cutouts.length);
+        cutoutSteps.splice(0, cutoutSteps.length);
+        lastCutoutStep = 0;
 
         // generate base and top
         startTriangle();
         const topSegments: Segment[] = generateTop();
+
+        // save top points as first cutout step
+        const topPoints: Point[] = topSegments.map((ts) => ts.start);
+        topPoints.push(topSegments[topSegments.length - 1].end, right.start);
+        cutoutSteps.push(new CutoutStep(topPoints));
 
         // cut right segment
         right.start = topSegments[topSegments.length - 1].end;
@@ -72,15 +94,30 @@ export const generate = (): void => {
             const cutout = generateCutout(segments, cutouts);
             if (cutout !== null) {
                 iters = 5000;
+                cutoutSteps.push(cutout.toCutoutStep());
             }
         }
     }
+};
 
-    segments.forEach((s) => {
-        drawSegment(getContext(), s);
-    });
-    cutouts.forEach((c) => {
-        drawSegment(ctx, c.firstSeg, '#00FF00');
-        drawSegment(ctx, c.secondSeg, '#00FF00');
-    });
+export const numberOfSteps = () => cutoutSteps.length;
+
+export const nextStep = (): boolean => {
+    if (lastCutoutStep > 0 && lastCutoutStep <= cutoutSteps.length) {
+        const prevStep = cutoutSteps[lastCutoutStep - 1];
+        prevStep.cut();
+    }
+    if (lastCutoutStep === cutoutSteps.length) {
+        // just show final result
+        lastCutoutStep++;
+        return true;
+    }
+    if (lastCutoutStep > cutoutSteps.length) {
+        generateFullSnowflake();
+        return false;
+    }
+    const step = cutoutSteps[lastCutoutStep];
+    step.draw();
+    lastCutoutStep++;
+    return true;
 };

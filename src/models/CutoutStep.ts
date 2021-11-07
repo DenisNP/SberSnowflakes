@@ -18,7 +18,7 @@ export default class CutoutStep {
         this.points = _points;
     }
 
-    private storeCanvasRect() {
+    public storeCanvasRect(): void {
         const ctx = getContext();
         const allX = this.points.map((p) => p.x);
         const allY = this.points.map((p) => p.y);
@@ -38,8 +38,13 @@ export default class CutoutStep {
         );
     }
 
+    public restoreCanvasRect(): void {
+        const ctx = getContext();
+        ctx.putImageData(this.storedRect, this.storedRectX, this.storedRectY);
+    }
+
     public draw(): void {
-        this.storeCanvasRect();
+        // this.storeCanvasRect();
         const ctx = getContext();
         ctx.lineWidth = 2;
         ctx.strokeStyle = '#ff0000';
@@ -53,7 +58,6 @@ export default class CutoutStep {
 
     public cut(): void {
         const ctx = getContext();
-        ctx.putImageData(this.storedRect, this.storedRectX, this.storedRectY);
         ctx.globalCompositeOperation = 'destination-out';
         ctx.lineWidth = 2;
         ctx.beginPath();

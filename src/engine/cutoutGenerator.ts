@@ -60,7 +60,7 @@ const shortestDistBetweenPointAndSegments = (segments: Segment[], p: Point) => M
 const shortestDistBetweenPointsAndSegment = (s: Segment, points: Point[]) => Math.min(...points.map((p) => s.distanceToPoint(p)));
 
 // eslint-disable-next-line max-len
-export const initCutoutGen = (cutoutsRatio: number, w: number, longest: number) => {
+export const initCutoutGen = (cutoutsRatio: number, w: number, longest: number): void => {
     const lessRatio = cutoutsRatio ** 0.25;
     margin = (w * 0.08) / Math.sqrt(cutoutsRatio);
     innerMargin = (margin * 2) / lessRatio;

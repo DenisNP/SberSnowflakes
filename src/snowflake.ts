@@ -10,8 +10,6 @@ import generateFullSnowflake from '@/engine/finalGenerator';
 let ctx: CanvasRenderingContext2D;
 let tm: number;
 let bm: number;
-let h: number;
-let w: number;
 let mw: number;
 let mh: number;
 let left: Segment;
@@ -21,12 +19,12 @@ let minCutoutsCount: number;
 const segments: Segment[] = [];
 const cutouts: Cutout[] = [];
 const cutoutSteps: CutoutStep[] = [];
-let lastCutoutStep = 0;
+const uncutSteps: CutoutStep[] = [];
+let totalCutoutsSteps: number;
+let finished = false;
 let cRatio: number;
 
 export const init = (
-    cutoutsRatio = 1.0,
-    minCutouts = 4,
     topMargin = 40,
     bottomMargin = 50,
 ): void => {
@@ -34,16 +32,11 @@ export const init = (
     bm = bottomMargin;
 
     const canvas = <HTMLCanvasElement>document.getElementById('canvas');
-    w = document.documentElement.clientWidth * 2;
-    h = document.documentElement.clientHeight * 2;
+    const h = document.documentElement.clientHeight * 2;
     mh = h - tm * 2 - bm * 2;
     mw = 2 * mh * Math.tan(Math.PI * 0.08333);
     canvas.width = mw;
     canvas.height = mh;
-
-    ctx = getContext();
-    cRatio = cutoutsRatio;
-    minCutoutsCount = minCutouts;
 };
 
 const startTriangle = (): void => {
@@ -51,6 +44,7 @@ const startTriangle = (): void => {
     const y = 0;
 
     ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(x + mw, y);
     ctx.lineTo(mw / 2, y + mh);
@@ -59,22 +53,40 @@ const startTriangle = (): void => {
 
     left = new Segment(new Point(mw / 2, y + mh), new Point(x, y));
     right = new Segment(new Point(x + mw, y), new Point(mw / 2, y + mh));
-    segments.push(left, right);
     initTopCutter(left, right);
     initCutoutGen(cRatio, mw, Math.max(mw, mh));
+};
+
+const reset = ():void => {
+    segments.splice(0);
+    cutouts.splice(0);
+    cutoutSteps.splice(0);
+    uncutSteps.splice(0);
+};
+
+export const setup = (
+    cutoutsRatio = 1.0,
+    minCutouts = 4,
+): void => {
+    ctx = getContext(true);
+    ctx.resetTransform();
+    ctx.clearRect(0, 0, mw, mh);
+    cRatio = cutoutsRatio;
+    minCutoutsCount = minCutouts;
+    finished = false;
+
+    reset();
+    startTriangle();
 };
 
 export const generate = (): void => {
     let globalIterations = 10;
     while (cutouts.length < minCutoutsCount && globalIterations-- > 0) {
         // reset
-        segments.splice(0, segments.length);
-        cutouts.splice(0, cutouts.length);
-        cutoutSteps.splice(0, cutoutSteps.length);
-        lastCutoutStep = 0;
+        reset();
 
         // generate base and top
-        startTriangle();
+        segments.push(new Segment(left.start, left.end), new Segment(right.start, right.end));
         const topSegments: Segment[] = generateTop();
 
         // save top points as first cutout step
@@ -83,41 +95,53 @@ export const generate = (): void => {
         cutoutSteps.push(new CutoutStep(topPoints));
 
         // cut right segment
-        right.start = topSegments[topSegments.length - 1].end;
+        segments[segments.length - 1].start = topSegments[topSegments.length - 1].end;
 
         // add new segments
         segments.splice(1, 0, ...topSegments);
 
         // generate cutouts
-        let iters = 5000;
-        while (iters-- > 0 && segments.length > 0) {
+        let iterations = 5000;
+        while (iterations-- > 0 && segments.length > 0) {
             const cutout = generateCutout(segments, cutouts);
             if (cutout !== null) {
-                iters = 5000;
+                iterations = 5000;
                 cutoutSteps.push(cutout.toCutoutStep());
             }
         }
+        totalCutoutsSteps = cutoutSteps.length;
     }
+
+    console.log(`Generated, cutout steps: ${totalCutoutsSteps}`);
 };
 
-export const numberOfSteps = () => cutoutSteps.length;
-
-export const nextStep = (): boolean => {
-    if (lastCutoutStep > 0 && lastCutoutStep <= cutoutSteps.length) {
-        const prevStep = cutoutSteps[lastCutoutStep - 1];
-        prevStep.cut();
+export const nextStep = (): number => {
+    uncutSteps.forEach((us) => us.restoreCanvasRect());
+    while (uncutSteps.length > 0) {
+        (uncutSteps.shift() as CutoutStep).cut();
     }
-    if (lastCutoutStep === cutoutSteps.length) {
-        // just show final result
-        lastCutoutStep++;
-        return true;
+    // just snow final snowflake
+    if (cutoutSteps.length === 0) {
+        if (!finished) {
+            generateFullSnowflake();
+            finished = true;
+            return 0;
+        }
+        return -1;
     }
-    if (lastCutoutStep > cutoutSteps.length) {
-        generateFullSnowflake();
-        return false;
+    // first step always single
+    if (totalCutoutsSteps === cutoutSteps.length) {
+        const step = cutoutSteps.shift() as CutoutStep;
+        step.storeCanvasRect();
+        step.draw();
+        uncutSteps.push(step);
+        return 1;
     }
-    const step = cutoutSteps[lastCutoutStep];
-    step.draw();
-    lastCutoutStep++;
-    return true;
+    // other steps single or in groups
+    const stepsToShowCount = totalCutoutsSteps <= 5 ? 1 : 2;
+    const steps = cutoutSteps.splice(0, stepsToShowCount);
+    steps.forEach((s) => s.storeCanvasRect());
+    steps.forEach((s) => s.draw());
+    uncutSteps.push(...steps);
+    return steps.length;
 };

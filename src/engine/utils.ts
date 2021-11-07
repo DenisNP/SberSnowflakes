@@ -49,8 +49,8 @@ export const intersect = (f: Segment, s: Segment): Point | null => {
 
 let canvasContext: CanvasRenderingContext2D;
 
-export const getContext = (): CanvasRenderingContext2D => {
-    if (canvasContext) return canvasContext;
+export const getContext = (forceClear = false): CanvasRenderingContext2D => {
+    if (canvasContext && !forceClear) return canvasContext;
     const canvas = <HTMLCanvasElement>document.getElementById('canvas');
     canvasContext = <CanvasRenderingContext2D>canvas.getContext('2d');
     return canvasContext;

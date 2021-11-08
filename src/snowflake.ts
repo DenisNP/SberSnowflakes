@@ -111,8 +111,6 @@ export const generate = (): void => {
         }
         totalCutoutsSteps = cutoutSteps.length;
     }
-
-    console.log(`Generated, cutout steps: ${totalCutoutsSteps}`);
 };
 
 export const nextStep = (): number => {
@@ -125,9 +123,9 @@ export const nextStep = (): number => {
         if (!finished) {
             generateFullSnowflake();
             finished = true;
-            return 0;
+            return -1;
         }
-        return -1;
+        return -2;
     }
     // first step always single
     if (totalCutoutsSteps === cutoutSteps.length) {
@@ -135,7 +133,7 @@ export const nextStep = (): number => {
         step.storeCanvasRect();
         step.draw();
         uncutSteps.push(step);
-        return 1;
+        return 0;
     }
     // other steps single or in groups
     const stepsToShowCount = totalCutoutsSteps <= 5 ? 1 : 2;

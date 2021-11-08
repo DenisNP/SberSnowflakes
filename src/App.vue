@@ -50,6 +50,8 @@ export default Vue.extend({
             bottomMargin: 50,
             bottomInset: 0,
             sideMargin: 20,
+            informal: false,
+            firstStart: true,
             assistant: null,
         };
     },
@@ -75,10 +77,11 @@ export default Vue.extend({
                 };
 
                 // @ts-ignore
-                this.assistant = initialize(() => {
-                });
+                this.assistant = initialize(() => {});
                 // @ts-ignore
                 this.assistant.on('data', (command) => {
+                    if (process.env.NODE_ENV === 'development') console.log(command);
+
                     if (command.type === 'insets') {
                         let b = command.insets && command.insets.bottom;
                         if (b) {
@@ -89,6 +92,27 @@ export default Vue.extend({
                         }
 
                         this.setSizes();
+                    } else if (command.type === 'smart_app_data') {
+                        if (command.action === 'close') {
+                            (this.assistant as any).close();
+                        } else if (command.action === 'start') {
+                            if (command.data === 'easy') this.start(true, true);
+                            else this.start(false, true);
+                        } else if (command.action === 'next') {
+                            this.next(true);
+                        } else if (command.action === 'restart') {
+                            this.restart(true);
+                        } else if (command.action === 'skip') {
+                            this.skip(true);
+                        }
+                    } else if (command.type === 'character') {
+                        if (command.character && command.character.id) {
+                            this.informal = command.character.id.toLowerCase() === 'joy';
+                        }
+                    } else if (command.type === 'navigation' && command.navigation && command.navigation.command) {
+                        if (command.navigation.command.toLowerCase() === 'forward') {
+                            this.next();
+                        }
                     }
                 });
             } else {
@@ -112,27 +136,7 @@ export default Vue.extend({
 
             init(this.topMargin, this.bottomMargin + this.bottomInset);
         },
-        next() {
-            if (!this.foldingStarted) return;
-            if (!this.cutStarted && this.currentFoldingStep < this.totalFoldingSteps) {
-                // folding next step
-                this.currentFoldingStep += 1;
-            } else if (!this.finished) {
-                if (this.currentFoldingStep === this.totalFoldingSteps) this.cutStarted = true;
-                // cut next step
-                this.$nextTick(() => {
-                    const cutoutsCount = nextStep();
-                    if (cutoutsCount === -1) {
-                        this.finished = true;
-                    }
-                });
-            }
-        },
-        skip() {
-            this.currentFoldingStep = this.totalFoldingSteps;
-            this.next();
-        },
-        start(easyMode: boolean) {
+        start(easyMode: boolean, silent = false) {
             this.easyMode = easyMode;
             this.finished = false;
             this.cutStarted = false;
@@ -146,17 +150,65 @@ export default Vue.extend({
                 setup(cutoutsRatio, minCutouts);
                 generate();
             });
+            if (!silent) this.say('start', 0);
         },
-        restart() {
+        next(silent = false) {
+            if (!this.foldingStarted || this.finished) return;
+            if (!this.cutStarted && this.currentFoldingStep < this.totalFoldingSteps) {
+                // folding next step
+                if (!silent) this.say('folding', this.currentFoldingStep);
+                this.currentFoldingStep += 1;
+            } else if (!this.finished) {
+                if (this.currentFoldingStep === this.totalFoldingSteps) this.cutStarted = true;
+                // cut next step
+                this.$nextTick(() => {
+                    const cutoutsCount = nextStep();
+                    if (cutoutsCount === -1 && !silent) {
+                        // ready to unfold
+                        this.say('unfold', 0);
+                    } else if (cutoutsCount === -2) {
+                        // show final result
+                        this.finished = true;
+                        if (!silent) this.say('finish', 0);
+                    } else if (!silent) {
+                        // just cut
+                        this.say('cut', cutoutsCount);
+                    }
+                });
+            }
+        },
+        skip(silent = false) {
+            this.currentFoldingStep = this.totalFoldingSteps;
+            this.next(silent);
+        },
+        restart(silent = false) {
             this.finished = false;
             this.cutStarted = false;
             this.foldingStarted = false;
+            this.firstStart = false;
+            if (!silent) this.say('enter', 1);
+        },
+        say(action: string, param: number) {
+            if (!this.assistant) return;
+            (this.assistant as any).sendData(
+                { action: { action_id: action, payload: { param } } },
+                null,
+            );
         },
     },
 });
 </script>
 
 <style>
+/* pangolin-regular - latin_cyrillic */
+@font-face {
+    font-family: 'Pangolin';
+    font-style: normal;
+    font-weight: 400;
+    url('./fonts/pangolin-v6-latin_cyrillic-regular.woff2') format('woff2'),
+    url('./fonts/pangolin-v6-latin_cyrillic-regular.woff') format('woff');
+}
+
 body, html {
     margin: 0;
     padding: 0;
@@ -256,7 +308,7 @@ button {
     outline: none;
     background-color: white;
     color: #2e78a2;
-    font-family: cursive;
+    font-family: 'Pangolin', cursive;
     box-shadow: 0 0 10px #024c82;
     opacity: 0.8;
 }

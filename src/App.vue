@@ -11,28 +11,33 @@
             </button>
         </div>
         <div class="folding-container" v-show="foldingStarted && !cutStarted">
-            <div v-if="currentFoldingStep === 1">
+            <div v-show="currentFoldingStep === 1">
                 <img src="./assets/fold-01.png" alt="folding step 1"/>
             </div>
-            <div v-if="currentFoldingStep === 2">
+            <div v-show="currentFoldingStep === 2">
                 <img src="./assets/fold-02.png" alt="folding step 2"/>
             </div>
-            <div v-if="currentFoldingStep === 3">
+            <div v-show="currentFoldingStep === 3">
                 <img src="./assets/fold-03.png" alt="folding step 3"/>
+            </div>
+            <div v-show="currentFoldingStep === 4">
+                <img src="./assets/fold-04.png" alt="folding step 4"/>
             </div>
         </div>
         <canvas key="cv" v-show="!finished && cutStarted" class="centered" id="canvas"/>
         <canvas key="cf" v-show="finished" class="centered" id="cFinal"/>
         <button v-if="finished" class="restart-btn" @click="restart">Ещё снежинка</button>
         <div class="footer"/>
-        <button
-            v-if="showSkip"
-            class="skip-btn"
-            @click="skip"
-        >
-            Пропустить складывание
-        </button>
-        <button v-if="!finished && foldingStarted" class="next-btn" @click="next">&gt;</button>
+        <div class="buttons">
+            <button
+                v-if="showSkip"
+                class="skip-btn"
+                @click="skip"
+            >
+                Пропустить складывание
+            </button>
+            <button v-if="!finished && foldingStarted" class="next-btn" @click="next">&gt;</button>
+        </div>
     </div>
 </template>
 
@@ -51,7 +56,7 @@ export default Vue.extend({
     data() {
         return {
             foldingStarted: false,
-            totalFoldingSteps: 3,
+            totalFoldingSteps: 4,
             currentFoldingStep: 1,
             cutStarted: false,
             finished: false,
@@ -242,7 +247,7 @@ body, html {
     display: flex;
     flex-direction: column;
     position: fixed;
-    background-color: #4d9ed9;
+    background: linear-gradient(135deg, rgba(77,158,217,1) 0%, rgba(83,124,218,1) 100%);
     align-items: center;
     justify-content: center;
 }
@@ -257,37 +262,39 @@ body, html {
     filter: drop-shadow(8px 8px 10px rgba(0, 0, 0, 0.4));
 }
 
-.skip-btn {
+.buttons {
     position: fixed;
+    bottom: calc(15px + var(--bottom-inset) * 1px);
+    right: 15px;
+    display: flex;
+}
+
+.skip-btn {
     height: 70px;
     max-width: calc(100vw - 115px);
     font-size: 18px;
-    right: 100px;
-    bottom: calc(15px + var(--bottom-inset) * 1px);
-    border-radius: 35px;
+    border-radius: 999px;
     text-align: center;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     word-wrap: break-word;
-    padding: 0 20px 4px 20px;
+    padding: 0 20px 0 20px;
+    margin-right: 15px;
 }
 
 .next-btn {
-    position: fixed;
     width: 70px;
     height: 70px;
     font-size: 40px;
-    right: 15px;
-    bottom: calc(15px + var(--bottom-inset) * 1px);
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
     text-align: center;
     padding-left: 3px;
-    padding-bottom: 7px;
+    padding-bottom: 3px;
 }
 
 .restart-btn {
@@ -295,10 +302,11 @@ body, html {
     justify-content: center;
     align-items: center;
     text-align: center;
-    padding: 10px 20px;
-    border-radius: 20px;
-    font-size: 20px;
-    font-weight: bold;
+    padding: 0 20px 0 20px;
+    height: 70px;
+    border-radius: 999px;
+    font-size: 18px;
+    /*font-weight: bold;*/
     position: fixed;
     bottom: calc(15px + var(--bottom-inset) * 1px);
 }
@@ -387,5 +395,22 @@ button:focus {
     font-size: 16px;
     color: #4a92c6;
     margin-bottom: 6px;
+}
+
+@media (min-width: 767px) {
+    .menu {
+        transform: scale(1.5);
+    }
+
+    .restart-btn, .buttons {
+        transform: scale(1.5);
+        transform-origin: bottom right;
+    }
+}
+
+@media (min-aspect-ratio: 1/1) {
+    .restart-btn {
+        right: 15px;
+    }
 }
 </style>

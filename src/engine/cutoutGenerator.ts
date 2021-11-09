@@ -18,7 +18,7 @@ let maxEdgeSegmentLen: number;
 let minCutoutLength: number;
 let minCutoutSq: number;
 let maxCutoutSq: number;
-const maxCutoutStretch = 5;
+let maxCutoutStretch: number;
 const maxSlantAng = 60;
 let maxProjection: number;
 
@@ -71,6 +71,7 @@ export const initCutoutGen = (cutoutsRatio: number, w: number, longest: number):
     maxCutoutSq = (w * w * 0.1);
     maxProjection = longest * 2;
     minCutoutLength = minEdgeSegmentLen / 2;
+    maxCutoutStretch = 5 * Math.max(1, lessRatio);
 };
 
 export const generateCutout = (segments: Segment[], cutouts: Cutout[]): Cutout | null => {

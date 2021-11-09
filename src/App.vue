@@ -11,15 +11,25 @@
             </button>
         </div>
         <div class="folding-container" v-show="foldingStarted && !cutStarted">
-            <div v-if="currentFoldingStep === 1">Ступень 1</div>
-            <div v-if="currentFoldingStep === 2">Ступень 2</div>
-            <div v-if="currentFoldingStep === 3">Ступень 3</div>
+            <div v-if="currentFoldingStep === 1">
+                <img src="./assets/fold-01.png" alt="folding step 1"/>
+            </div>
+            <div v-if="currentFoldingStep === 2">
+                <img src="./assets/fold-02.png" alt="folding step 2"/>
+            </div>
+            <div v-if="currentFoldingStep === 3">
+                <img src="./assets/fold-03.png" alt="folding step 3"/>
+            </div>
         </div>
         <canvas key="cv" v-show="!finished && cutStarted" class="centered" id="canvas"/>
         <canvas key="cf" v-show="finished" class="centered" id="cFinal"/>
         <button v-if="finished" class="restart-btn" @click="restart">Ещё снежинка</button>
         <div class="footer"/>
-        <button v-if="!finished && foldingStarted && !cutStarted" class="skip-btn" @click="skip">
+        <button
+            v-if="showSkip"
+            class="skip-btn"
+            @click="skip"
+        >
             Пропустить складывание
         </button>
         <button v-if="!finished && foldingStarted" class="next-btn" @click="next">&gt;</button>
@@ -54,6 +64,16 @@ export default Vue.extend({
             firstStart: true,
             assistant: null,
         };
+    },
+    computed: {
+        showSkip() {
+            const self: any = this as any;
+            return !self.finished
+                && self.foldingStarted
+                && !self.cutStarted
+                && !self.firstStart
+                && self.currentFoldingStep < self.totalFoldingSteps;
+        },
     },
     mounted() {
         // assistant client
@@ -205,8 +225,7 @@ export default Vue.extend({
     font-family: 'Pangolin';
     font-style: normal;
     font-weight: 400;
-    url('./fonts/pangolin-v6-latin_cyrillic-regular.woff2') format('woff2'),
-    url('./fonts/pangolin-v6-latin_cyrillic-regular.woff') format('woff');
+    src: url('./fonts/pangolin-v6-latin_cyrillic-regular.woff2') format('woff2');
 }
 
 body, html {
@@ -322,6 +341,18 @@ button:focus {
 .folding-container {
     height: calc(100vh - var(--bottom-inset) * 1px - 100px);
     margin-bottom: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.folding-container > div {
+    height: 100%;
+}
+
+.folding-container img {
+    width: 100%;
+    max-height: 100%;
 }
 
 .menu {

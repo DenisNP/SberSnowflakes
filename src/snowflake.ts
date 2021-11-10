@@ -15,6 +15,9 @@ let mh: number;
 let left: Segment;
 let right: Segment;
 let minCutoutsCount: number;
+let maxCutoutsCount: number;
+let maximumGlobalIterations: number;
+let maximumIterations: number;
 
 const segments: Segment[] = [];
 const cutouts: Cutout[] = [];
@@ -66,13 +69,19 @@ const reset = ():void => {
 
 export const setup = (
     cutoutsRatio = 1.0,
-    minCutouts = 4,
+    minCutouts = 0,
+    maxCutouts = Number.MAX_VALUE,
+    maxGlobalIterations = 10,
+    maxSubIterations = 5000,
 ): void => {
     ctx = getContext(true);
     ctx.resetTransform();
     ctx.clearRect(0, 0, mw, mh);
     cRatio = cutoutsRatio;
     minCutoutsCount = minCutouts;
+    maxCutoutsCount = maxCutouts;
+    maximumGlobalIterations = maxGlobalIterations;
+    maximumIterations = maxSubIterations;
     finished = false;
 
     reset();
@@ -80,8 +89,9 @@ export const setup = (
 };
 
 export const generate = (): void => {
-    let globalIterations = 10;
-    while (cutouts.length < minCutoutsCount && globalIterations-- > 0) {
+    let globalIterations = maximumGlobalIterations;
+    while ((cutouts.length < minCutoutsCount || cutouts.length > maxCutoutsCount)
+        && globalIterations-- > 0) {
         // reset
         reset();
 
@@ -101,11 +111,11 @@ export const generate = (): void => {
         segments.splice(1, 0, ...topSegments);
 
         // generate cutouts
-        let iterations = 5000;
+        let iterations = maximumIterations;
         while (iterations-- > 0 && segments.length > 0) {
             const cutout = generateCutout(segments, cutouts);
             if (cutout !== null) {
-                iterations = 5000;
+                iterations = maximumIterations;
                 cutoutSteps.push(cutout.toCutoutStep());
             }
         }
@@ -113,7 +123,7 @@ export const generate = (): void => {
     }
 };
 
-export const nextStep = (): number => {
+export const nextStep = (maxCutsPerStep = 1): number => {
     uncutSteps.forEach((us) => us.restoreCanvasRect());
     while (uncutSteps.length > 0) {
         (uncutSteps.shift() as CutoutStep).cut();
@@ -136,8 +146,7 @@ export const nextStep = (): number => {
         return 0;
     }
     // other steps single or in groups
-    const stepsToShowCount = totalCutoutsSteps <= 5 ? 1 : 2;
-    const steps = cutoutSteps.splice(0, stepsToShowCount);
+    const steps = cutoutSteps.splice(0, maxCutsPerStep);
     steps.forEach((s) => s.storeCanvasRect());
     steps.forEach((s) => s.draw());
     uncutSteps.push(...steps);

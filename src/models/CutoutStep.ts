@@ -24,7 +24,7 @@ export default class CutoutStep {
         const allY = this.points.map((p) => p.y);
         const minX = Math.min(...allX);
         const minY = Math.min(...allY);
-        const margin = 10;
+        const margin = 20;
         const w = Math.max(...allX) - minX;
         const h = Math.max(...allY) - minY;
         this.storedRectX = minX - margin;
@@ -44,9 +44,9 @@ export default class CutoutStep {
     }
 
     public draw(): void {
-        // this.storeCanvasRect();
         const ctx = getContext();
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 4;
+        ctx.setLineDash([15, 15]);
         ctx.strokeStyle = '#ff0000';
         ctx.beginPath();
         ctx.moveTo(this.points[0].x, this.points[0].y);
@@ -59,7 +59,8 @@ export default class CutoutStep {
     public cut(): void {
         const ctx = getContext();
         ctx.globalCompositeOperation = 'destination-out';
-        ctx.lineWidth = 2;
+        ctx.setLineDash([]);
+        ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(this.points[0].x, this.points[0].y);
         for (let i = 1; i < this.points.length; i++) {

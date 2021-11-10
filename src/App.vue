@@ -1,6 +1,9 @@
 <template>
     <div id="app">
-        <div class="menu" v-if="!foldingStarted">
+        <audio loop preload="auto" ref="music">
+            <source src="./assets/music.mp3" type="audio/mp3"/>
+        </audio>
+        <div class="menu" v-if="!foldingStarted" v-show="loaded">
             <button class="menu-button" @click="() => start(true)">
                 <span>Простой узор</span>
                 <span>Подходит для детей</span>
@@ -38,6 +41,7 @@
             </button>
             <button v-if="!finished && foldingStarted" class="next-btn" @click="next">&gt;</button>
         </div>
+        <snowflakes v-if="!foldingStarted"/>
     </div>
 </template>
 
@@ -50,11 +54,14 @@ import { createAssistant, createSmartappDebugger } from '@sberdevices/assistant-
 import {
     init, generate, nextStep, setup,
 } from './snowflake';
+import Snowflakes from '@/components/Snowflakes.vue';
 
 export default Vue.extend({
     name: 'App',
+    components: { Snowflakes },
     data() {
         return {
+            loaded: false,
             foldingStarted: false,
             totalFoldingSteps: 4,
             currentFoldingStep: 1,
@@ -121,14 +128,14 @@ export default Vue.extend({
                         if (command.action === 'close') {
                             (this.assistant as any).close();
                         } else if (command.action === 'start') {
-                            if (command.data === 'easy') this.start(true, true);
-                            else this.start(false, true);
+                            if (command.data === 'easy') this.start(true);
+                            else this.start(false);
                         } else if (command.action === 'next') {
-                            this.next(true);
+                            this.next();
                         } else if (command.action === 'restart') {
-                            this.restart(true);
+                            this.restart();
                         } else if (command.action === 'skip') {
-                            this.skip(true);
+                            this.skip();
                         }
                     } else if (command.type === 'character') {
                         if (command.character && command.character.id) {
@@ -160,8 +167,12 @@ export default Vue.extend({
             cFin.height = finalSize;
 
             init(this.topMargin, this.bottomMargin + this.bottomInset);
+            this.loaded = true;
         },
-        start(easyMode: boolean, silent = false) {
+        start(easyMode: boolean) {
+            const audio = this.$refs.music as HTMLAudioElement;
+            audio.volume = 0.75;
+            audio.play();
             this.easyMode = easyMode;
             this.finished = false;
             this.cutStarted = false;
@@ -169,49 +180,50 @@ export default Vue.extend({
             this.currentFoldingStep = 1;
 
             // generate pattern
-            const cutoutsRatio = this.easyMode ? 0.7 : 1.5;
-            const minCutouts = this.easyMode ? 3 : 6;
+            const cutoutsRatio = this.easyMode ? 1 : 2;
+            const minCutouts = this.easyMode ? 4 : 6;
+            const maxCutouts = this.easyMode ? 5 : 12;
             this.$nextTick(() => {
-                setup(cutoutsRatio, minCutouts);
+                setup(cutoutsRatio, minCutouts, maxCutouts);
                 generate();
             });
-            if (!silent) this.say('start', 0);
+            this.say('folding', this.firstStart ? 0 : 1);
         },
-        next(silent = false) {
+        next() {
             if (!this.foldingStarted || this.finished) return;
             if (!this.cutStarted && this.currentFoldingStep < this.totalFoldingSteps) {
                 // folding next step
-                if (!silent) this.say('folding', this.currentFoldingStep);
                 this.currentFoldingStep += 1;
+                this.say('folding', this.currentFoldingStep);
             } else if (!this.finished) {
                 if (this.currentFoldingStep === this.totalFoldingSteps) this.cutStarted = true;
                 // cut next step
                 this.$nextTick(() => {
-                    const cutoutsCount = nextStep();
-                    if (cutoutsCount === -1 && !silent) {
+                    const cutoutsCount = nextStep(this.easyMode ? 1 : 2);
+                    if (cutoutsCount === -1) {
                         // ready to unfold
                         this.say('unfold', 0);
                     } else if (cutoutsCount === -2) {
                         // show final result
                         this.finished = true;
-                        if (!silent) this.say('finish', 0);
-                    } else if (!silent) {
+                        this.say('finish', 0);
+                    } else {
                         // just cut
                         this.say('cut', cutoutsCount);
                     }
                 });
             }
         },
-        skip(silent = false) {
+        skip() {
             this.currentFoldingStep = this.totalFoldingSteps;
-            this.next(silent);
+            this.next();
         },
-        restart(silent = false) {
+        restart() {
             this.finished = false;
             this.cutStarted = false;
             this.foldingStarted = false;
             this.firstStart = false;
-            if (!silent) this.say('enter', 1);
+            this.say('enter', 1);
         },
         say(action: string, param: number) {
             if (!this.assistant) return;
@@ -264,7 +276,7 @@ body, html {
 
 .buttons {
     position: fixed;
-    bottom: calc(15px + var(--bottom-inset) * 1px);
+    bottom: calc(15px + var(--bottom-inset, 0));
     right: 15px;
     display: flex;
 }
@@ -308,7 +320,7 @@ body, html {
     font-size: 18px;
     /*font-weight: bold;*/
     position: fixed;
-    bottom: calc(15px + var(--bottom-inset) * 1px);
+    bottom: calc(15px + var(--bottom-inset, 0));
 }
 
 * {
@@ -326,7 +338,7 @@ body, html {
 
 .footer {
     width: 1px;
-    min-height: var(--bottom-inset);
+    min-height: var(--bottom-inset, 0);
 }
 
 button {
@@ -347,7 +359,7 @@ button:focus {
 }
 
 .folding-container {
-    height: calc(100vh - var(--bottom-inset) * 1px - 100px);
+    height: calc(100vh - var(--bottom-inset, 0) - 100px);
     margin-bottom: 100px;
     display: flex;
     justify-content: center;

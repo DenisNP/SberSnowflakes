@@ -61,17 +61,18 @@ const shortestDistBetweenPointsAndSegment = (s: Segment, points: Point[]) => Mat
 
 // eslint-disable-next-line max-len
 export const initCutoutGen = (cutoutsRatio: number, w: number, longest: number): void => {
-    const lessRatio = cutoutsRatio ** 0.25;
-    margin = (w * 0.08) / Math.sqrt(cutoutsRatio);
-    innerMargin = (margin * 2) / lessRatio;
-    pointToSegmentMargin = margin / lessRatio;
+    const sqRatio = cutoutsRatio ** 0.5;
+    const quarterRatio = cutoutsRatio ** 0.25;
+    margin = (w * 0.08) / sqRatio;
+    innerMargin = (margin * 2) / quarterRatio;
+    pointToSegmentMargin = margin / quarterRatio;
     minEdgeSegmentLen = (w * 0.1) / cutoutsRatio;
-    maxEdgeSegmentLen = (w * 0.5) / cutoutsRatio;
+    maxEdgeSegmentLen = (w * 0.5); // / cutoutsRatio;
     minCutoutSq = (w * w * 0.04) / cutoutsRatio;
-    maxCutoutSq = (w * w * 0.1);
+    maxCutoutSq = (w * w * 0.10);
     maxProjection = longest * 2;
     minCutoutLength = minEdgeSegmentLen / 2;
-    maxCutoutStretch = 5 * Math.max(1, lessRatio);
+    maxCutoutStretch = 5 * Math.max(1, cutoutsRatio);
 };
 
 export const generateCutout = (segments: Segment[], cutouts: Cutout[]): Cutout | null => {

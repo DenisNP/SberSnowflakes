@@ -5,7 +5,7 @@ import {
     fromAngAndLen, getPointFromStart,
     intersect,
     rand,
-    randomPointWithEdge,
+    randomPointWithMargin,
     toRad,
 } from '@/engine/utils';
 import Point from '@/models/Point';
@@ -53,13 +53,14 @@ const shortestDist = (segments: Segment[], proj: Segment) => {
     return minDist;
 };
 
-// eslint-disable-next-line max-len
-const shortestDistBetweenPointAndSegments = (segments: Segment[], p: Point) => Math.min(...segments.map((s) => s.distanceToPoint(p)));
+const shortestDistBetweenPointAndSegments = (segments: Segment[], p: Point) => Math.min(
+    ...segments.map((s) => s.distanceToPoint(p)),
+);
 
-// eslint-disable-next-line max-len
-const shortestDistBetweenPointsAndSegment = (s: Segment, points: Point[]) => Math.min(...points.map((p) => s.distanceToPoint(p)));
+const shortestDistBetweenPointsAndSegment = (s: Segment, points: Point[]) => Math.min(
+    ...points.map((p) => s.distanceToPoint(p)),
+);
 
-// eslint-disable-next-line max-len
 export const initCutoutGen = (cutoutsRatio: number, w: number, longest: number): void => {
     const sqRatio = cutoutsRatio ** 0.5;
     const quarterRatio = cutoutsRatio ** 0.25;
@@ -82,7 +83,7 @@ export const generateCutout = (segments: Segment[], cutouts: Cutout[]): Cutout |
     const segment = segments[segmentIndex];
 
     // choose center point and sides
-    const centerPoint = randomPointWithEdge(segment, margin + minEdgeSegmentLen / 2);
+    const centerPoint = randomPointWithMargin(segment, margin + minEdgeSegmentLen / 2);
     const shortestSide = Math.min(dist(centerPoint, segment.start), dist(centerPoint, segment.end));
     const halfSideLen = rand(minEdgeSegmentLen / 2,
         Math.min(shortestSide - margin, maxEdgeSegmentLen / 2));

@@ -21,9 +21,9 @@ export const getPointFromStart = (segment: Segment, fraction: number): Point => 
     return new Point(segment.start.x + xTrim, segment.start.y + yTrim);
 };
 
-export const getSubSegment = (segment: Segment, edge: number): Segment => {
+export const getSubSegment = (segment: Segment, margin: number): Segment => {
     const l = segment.len;
-    const startEdge = edge / l;
+    const startEdge = margin / l;
     const endEdge = 1 - startEdge;
     return new Segment(getPointFromStart(segment, startEdge), getPointFromStart(segment, endEdge));
 };
@@ -73,8 +73,8 @@ export const randomPointBetween = (p1: Point, p2: Point): Point => {
     return new Point(p1.x + dx * ratio, p1.y + dy * ratio);
 };
 
-export const randomPointWithEdge = (segment: Segment, edge: number) => {
-    const ss = getSubSegment(segment, edge);
+export const randomPointWithMargin = (segment: Segment, margin: number): Point => {
+    const ss = getSubSegment(segment, margin);
     return randomPointBetween(ss.start, ss.end);
 };
 

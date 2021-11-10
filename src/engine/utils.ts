@@ -91,6 +91,7 @@ export const drawSegment = (
 ): void => {
     ctx.strokeStyle = color;
     ctx.lineWidth = width;
+    ctx.setLineDash([]);
     ctx.beginPath();
     ctx.moveTo(segment.start.x, segment.start.y);
     ctx.lineTo(segment.end.x, segment.end.y);

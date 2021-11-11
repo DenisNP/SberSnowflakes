@@ -69,7 +69,7 @@ const reset = ():void => {
 
 export const setup = (
     cutoutsRatio = 1.0,
-    minCutouts = 0,
+    minCutouts = 1,
     maxCutouts = Number.MAX_VALUE,
     maxGlobalIterations = 10,
     maxSubIterations = 5000,

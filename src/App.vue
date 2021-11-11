@@ -67,7 +67,6 @@ export default Vue.extend({
 
             let result = 0;
             while (result !== -2) {
-                console.log(result);
                 result = nextStep(1);
             }
         },

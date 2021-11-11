@@ -276,7 +276,7 @@ body, html {
 
 .buttons {
     position: fixed;
-    bottom: calc(15px + var(--bottom-inset, 0));
+    bottom: calc(15px + var(--bottom-inset, 0px));
     right: 15px;
     display: flex;
 }
@@ -320,7 +320,7 @@ body, html {
     font-size: 18px;
     /*font-weight: bold;*/
     position: fixed;
-    bottom: calc(15px + var(--bottom-inset, 0));
+    bottom: calc(15px + var(--bottom-inset, 0px));
 }
 
 * {
@@ -333,12 +333,12 @@ body, html {
 }
 
 :root {
-    --bottom-inset: 0;
+    --bottom-inset: 0px;
 }
 
 .footer {
     width: 1px;
-    min-height: var(--bottom-inset, 0);
+    min-height: var(--bottom-inset, 0px);
 }
 
 button {
@@ -359,7 +359,7 @@ button:focus {
 }
 
 .folding-container {
-    height: calc(100vh - var(--bottom-inset, 0) - 100px);
+    height: calc(100vh - var(--bottom-inset, 0px) - 100px);
     margin-bottom: 100px;
     display: flex;
     justify-content: center;
@@ -409,6 +409,12 @@ button:focus {
     margin-bottom: 6px;
 }
 
+@media (min-aspect-ratio: 1/1) {
+    .restart-btn {
+        right: 15px;
+    }
+}
+
 @media (min-width: 767px) {
     .menu {
         transform: scale(1.5);
@@ -417,12 +423,19 @@ button:focus {
     .restart-btn, .buttons {
         transform: scale(1.5);
         transform-origin: bottom right;
+        right: 30px;
+        bottom: calc(30px + var(--bottom-inset, 0px));
     }
 }
 
-@media (min-aspect-ratio: 1/1) {
-    .restart-btn {
-        right: 15px;
+@media (min-width: 1281px) {
+    .menu {
+        transform: scale(2.0);
+    }
+
+    .restart-btn, .buttons {
+        transform: scale(2.0);
+        transform-origin: bottom right;
     }
 }
 </style>

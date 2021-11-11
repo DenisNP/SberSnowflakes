@@ -367,12 +367,14 @@ button:focus {
 }
 
 .folding-container > div {
+    display: flex;
     height: 100%;
 }
 
 .folding-container img {
-    width: 100%;
+    height: 100%;
     max-height: 100%;
+    width: auto;
 }
 
 .menu {

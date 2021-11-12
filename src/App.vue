@@ -117,9 +117,8 @@ export default Vue.extend({
                     if (command.type === 'insets') {
                         let b = command.insets && command.insets.bottom;
                         if (b) {
-                            const root = document.documentElement;
-                            if (b > 200) b = 144; // TODO await fix
-                            root.style.setProperty('--bottom-inset', `${b}px`);
+                            if (b > 150) b /= window.devicePixelRatio; // TODO await fix
+                            document.documentElement.style.setProperty('--bottom-inset', `${b}px`);
                             this.bottomInset = b;
                         }
 
@@ -152,6 +151,8 @@ export default Vue.extend({
             }
         } catch (err) {
             // ignore
+            document.documentElement.style.setProperty('--bottom-inset', '144px');
+            this.bottomInset = 144;
             this.setSizes();
         }
     },
@@ -276,7 +277,7 @@ body, html {
 
 .buttons {
     position: fixed;
-    bottom: calc(15px + var(--bottom-inset, 0px));
+    bottom: calc(15px + var(--bottom-inset));
     right: 15px;
     display: flex;
 }
@@ -318,9 +319,8 @@ body, html {
     height: 70px;
     border-radius: 999px;
     font-size: 18px;
-    /*font-weight: bold;*/
     position: fixed;
-    bottom: calc(15px + var(--bottom-inset, 0px));
+    bottom: calc(15px + var(--bottom-inset));
 }
 
 * {
@@ -369,12 +369,14 @@ button:focus {
 .folding-container > div {
     display: flex;
     height: 100%;
+    align-items: flex-start;
 }
 
 .folding-container img {
-    height: 100%;
     max-height: 100%;
+    max-width: 100%;
     width: auto;
+    object-fit: contain;
 }
 
 .menu {

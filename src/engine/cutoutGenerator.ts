@@ -110,7 +110,7 @@ export const generateCutout = (segments: Segment[], cutouts: Cutout[]): Cutout |
     let maxLen = Number.MAX_VALUE;
 
     // create projection for every step
-    for (let i = 0; i < steps; i++) {
+    for (let i = 0; i <= steps; i++) {
         const startProj = getPointFromStart(sideSegment, (i * stepSize) / fullLen);
         const proj = fromAngAndLen(startProj, slantAng * toRad, maxProjection);
         const minDist = shortestDist(allSeg, proj);

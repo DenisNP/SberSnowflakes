@@ -29,9 +29,11 @@
         </div>
         <canvas key="cv" v-show="!finished && cutStarted" class="centered" id="canvas"/>
         <canvas key="cf" v-show="finished" class="centered" id="cFinal"/>
-        <button v-if="finished" class="restart-btn" @click="restart">Ещё снежинка</button>
+        <button v-if="finished" class="restart-btn bottom-button" :class="{ios}" @click="restart">
+            Ещё снежинка
+        </button>
         <div class="footer"/>
-        <div class="buttons">
+        <div class="buttons bottom-button" :class="{ios}">
             <button
                 v-if="showSkip"
                 class="skip-btn"
@@ -75,6 +77,7 @@ export default Vue.extend({
             informal: false,
             firstStart: true,
             assistant: null,
+            ios: false, // fixing fucking ios safari issues
         };
     },
     computed: {
@@ -88,6 +91,10 @@ export default Vue.extend({
         },
     },
     mounted() {
+        // fixing fucking ios safari issues
+        this.ios = !!((/iPad|iPhone|iPod/.test(navigator.platform))
+            || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform)));
+
         // assistant client
         try {
             window.alert = (t) => {
@@ -115,8 +122,8 @@ export default Vue.extend({
                     if (process.env.NODE_ENV === 'development') console.log(command);
 
                     if (command.type === 'insets') {
-                        let b = command.insets && command.insets.bottom;
-                        if (b) {
+                        let b = Number(command.insets && command.insets.bottom);
+                        if (b && !Number.isNaN(b)) {
                             if (b > 150) b /= window.devicePixelRatio; // TODO await fix
                             document.documentElement.style.setProperty('--bottom-inset', `${b}px`);
                             this.bottomInset = b;
@@ -151,8 +158,6 @@ export default Vue.extend({
             }
         } catch (err) {
             // ignore
-            document.documentElement.style.setProperty('--bottom-inset', '144px');
-            this.bottomInset = 144;
             this.setSizes();
         }
     },
@@ -249,6 +254,8 @@ export default Vue.extend({
 body, html {
     margin: 0;
     padding: 0;
+    height: 100vh;
+    position: fixed;
 }
 
 #app {
@@ -256,7 +263,10 @@ body, html {
     margin: 0;
     padding: 0;
     width: 100vw;
-    height: 100vh;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
     display: flex;
     flex-direction: column;
     position: fixed;
@@ -277,7 +287,6 @@ body, html {
 
 .buttons {
     position: fixed;
-    bottom: calc(15px + var(--bottom-inset));
     right: 15px;
     display: flex;
 }
@@ -320,7 +329,14 @@ body, html {
     border-radius: 999px;
     font-size: 18px;
     position: fixed;
+}
+
+.bottom-button {
     bottom: calc(15px + var(--bottom-inset));
+}
+
+.bottom-button.ios {
+    bottom: calc(15px + var(--bottom-inset) / 2);
 }
 
 * {
@@ -338,7 +354,7 @@ body, html {
 
 .footer {
     width: 1px;
-    min-height: var(--bottom-inset, 0px);
+    min-height: var(--bottom-inset);
 }
 
 button {
@@ -359,7 +375,7 @@ button:focus {
 }
 
 .folding-container {
-    height: calc(100vh - var(--bottom-inset, 0px) - 100px);
+    height: calc(100vh - var(--bottom-inset) - 100px);
     margin-bottom: 100px;
     display: flex;
     justify-content: center;
@@ -428,7 +444,14 @@ button:focus {
         transform: scale(1.5);
         transform-origin: bottom right;
         right: 30px;
-        bottom: calc(30px + var(--bottom-inset, 0px));
+    }
+
+    .bottom-button {
+        bottom: calc(30px + var(--bottom-inset));
+    }
+
+    .bottom-button.ios {
+        bottom: calc(30px + var(--bottom-inset) / 2);
     }
 }
 

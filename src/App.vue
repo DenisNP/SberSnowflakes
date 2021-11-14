@@ -32,7 +32,7 @@
         <button v-if="finished" class="restart-btn bottom-button" :class="{ios}" @click="restart">
             Ещё снежинка
         </button>
-        <div class="footer"/>
+        <div class="footer" :class="{ios}"/>
         <div class="buttons bottom-button" :class="{ios}">
             <button
                 v-if="showSkip"
@@ -254,8 +254,10 @@ export default Vue.extend({
 body, html {
     margin: 0;
     padding: 0;
+    width: 100vw;
     height: 100vh;
     position: fixed;
+    background: linear-gradient(135deg, rgba(77,158,217,1) 0%, rgba(83,124,218,1) 100%);
 }
 
 #app {
@@ -270,7 +272,6 @@ body, html {
     display: flex;
     flex-direction: column;
     position: fixed;
-    background: linear-gradient(135deg, rgba(77,158,217,1) 0%, rgba(83,124,218,1) 100%);
     align-items: center;
     justify-content: center;
 }
@@ -355,6 +356,10 @@ body, html {
 .footer {
     width: 1px;
     min-height: var(--bottom-inset);
+}
+
+.footer.ios {
+    display: none;
 }
 
 button {

@@ -109,68 +109,64 @@ export default Vue.extend({
                 console.log(`Alert: ${t}`);
             };
             const token = process.env.VUE_APP_SALUTE_TOKEN;
-            if (token) {
-                const initialize = (getState: any) => {
-                    if (process.env.NODE_ENV === 'development') {
-                        return createSmartappDebugger({
-                            token,
-                            initPhrase: 'запусти вырежи снежинку',
-                            getState,
-                        });
+            const initialize = (getState: any) => {
+                if (process.env.NODE_ENV === 'development') {
+                    return createSmartappDebugger({
+                        token,
+                        initPhrase: 'запусти вырежи снежинку',
+                        getState,
+                    });
+                }
+
+                // Только для среды production
+                return createAssistant({ getState });
+            };
+
+            // @ts-ignore
+            this.assistant = initialize(() => {});
+            // @ts-ignore
+            this.assistant.on('data', (command) => {
+                // eslint-disable-next-line
+                if (process.env.NODE_ENV === 'development') console.log(command);
+
+                if (command.type === 'insets') {
+                    let b = Number(command.insets && command.insets.bottom);
+                    if (b && !Number.isNaN(b)) {
+                        if (b > 150) b /= window.devicePixelRatio; // TODO await fix
+                        document.documentElement.style.setProperty('--bottom-inset', `${b}px`);
+                        this.bottomInset = b;
                     }
 
-                    // Только для среды production
-                    return createAssistant({ getState });
-                };
-
-                // @ts-ignore
-                this.assistant = initialize(() => {});
-                // @ts-ignore
-                this.assistant.on('data', (command) => {
-                    // eslint-disable-next-line
-                    if (process.env.NODE_ENV === 'development') console.log(command);
-
-                    if (command.type === 'insets') {
-                        let b = Number(command.insets && command.insets.bottom);
-                        if (b && !Number.isNaN(b)) {
-                            if (b > 150) b /= window.devicePixelRatio; // TODO await fix
-                            document.documentElement.style.setProperty('--bottom-inset', `${b}px`);
-                            this.bottomInset = b;
-                        }
-
-                        let t = Number(command.insets && command.insets.top);
-                        if (t && !Number.isNaN(t)) {
-                            if (t > 150) t /= window.devicePixelRatio; // TODO await fix
-                            document.documentElement.style.setProperty('--top-inset', `${t}px`);
-                        }
-
-                        this.setSizes();
-                    } else if (command.type === 'smart_app_data') {
-                        if (command.action === 'close') {
-                            (this.assistant as any).close();
-                        } else if (command.action === 'start') {
-                            if (command.data === 'easy') this.start(true);
-                            else this.start(false);
-                        } else if (command.action === 'next') {
-                            this.next();
-                        } else if (command.action === 'restart') {
-                            this.restart();
-                        } else if (command.action === 'skip') {
-                            this.skip();
-                        }
-                    } else if (command.type === 'character') {
-                        if (command.character && command.character.id) {
-                            this.informal = command.character.id.toLowerCase() === 'joy';
-                        }
-                    } else if (command.type === 'navigation' && command.navigation && command.navigation.command) {
-                        if (command.navigation.command.toLowerCase() === 'forward') {
-                            this.next();
-                        }
+                    let t = Number(command.insets && command.insets.top);
+                    if (t && !Number.isNaN(t)) {
+                        if (t > 150) t /= window.devicePixelRatio; // TODO await fix
+                        document.documentElement.style.setProperty('--top-inset', `${t}px`);
                     }
-                });
-            } else {
-                this.setSizes();
-            }
+
+                    this.setSizes();
+                } else if (command.type === 'smart_app_data') {
+                    if (command.action === 'close') {
+                        (this.assistant as any).close();
+                    } else if (command.action === 'start') {
+                        if (command.data === 'easy') this.start(true);
+                        else this.start(false);
+                    } else if (command.action === 'next') {
+                        this.next();
+                    } else if (command.action === 'restart') {
+                        this.restart();
+                    } else if (command.action === 'skip') {
+                        this.skip();
+                    }
+                } else if (command.type === 'character') {
+                    if (command.character && command.character.id) {
+                        this.informal = command.character.id.toLowerCase() === 'joy';
+                    }
+                } else if (command.type === 'navigation' && command.navigation && command.navigation.command) {
+                    if (command.navigation.command.toLowerCase() === 'forward') {
+                        this.next();
+                    }
+                }
+            });
         } catch (err) {
             // ignore
             this.setSizes();

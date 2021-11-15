@@ -92,11 +92,11 @@ export default Vue.extend({
     mounted() {
         // fixing fucking ios safari issues
         const ios = !!((/iPad|iPhone|iPod/.test(navigator.platform))
-            || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform)));
+            || (navigator.maxTouchPoints
+                && navigator.maxTouchPoints > 2
+                && /MacIntel/.test(navigator.platform)));
 
-        if (ios || true) {
-            document.documentElement.style.setProperty('--100vh', `${window.innerHeight}px`);
-        }
+        if (ios) document.documentElement.style.setProperty('--100vh', `${window.innerHeight}px`);
 
         // assistant client
         try {

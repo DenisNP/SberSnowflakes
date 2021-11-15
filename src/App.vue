@@ -123,6 +123,7 @@ export default Vue.extend({
 body, html {
     margin: 0;
     padding: 0;
+    background: linear-gradient(135deg, rgba(77,158,217,1) 0%, rgba(83,124,218,1) 100%);
 }
 
 root {
@@ -139,7 +140,6 @@ root {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(135deg, rgba(77,158,217,1) 0%, rgba(83,124,218,1) 100%);
     align-items: center;
     justify-content: center;
 }

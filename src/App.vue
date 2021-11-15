@@ -96,11 +96,16 @@ export default Vue.extend({
                 && navigator.maxTouchPoints > 2
                 && /MacIntel/.test(navigator.platform)));
 
-        if (ios) document.documentElement.style.setProperty('--100vh', `${window.innerHeight}px`);
+        if (ios) {
+            document.documentElement.style.setProperty('--100vh', `${window.innerHeight}px`);
+            document.documentElement.classList.add('ios');
+            document.body.classList.add('ios');
+        }
 
         // assistant client
         try {
             window.alert = (t) => {
+                // eslint-disable-next-line
                 console.log(`Alert: ${t}`);
             };
             const token = process.env.VUE_APP_SALUTE_TOKEN;
@@ -122,6 +127,7 @@ export default Vue.extend({
                 this.assistant = initialize(() => {});
                 // @ts-ignore
                 this.assistant.on('data', (command) => {
+                    // eslint-disable-next-line
                     if (process.env.NODE_ENV === 'development') console.log(command);
 
                     if (command.type === 'insets') {
@@ -130,6 +136,12 @@ export default Vue.extend({
                             if (b > 150) b /= window.devicePixelRatio; // TODO await fix
                             document.documentElement.style.setProperty('--bottom-inset', `${b}px`);
                             this.bottomInset = b;
+                        }
+
+                        let t = Number(command.insets && command.insets.top);
+                        if (t && !Number.isNaN(t)) {
+                            if (t > 150) t /= window.devicePixelRatio; // TODO await fix
+                            document.documentElement.style.setProperty('--top-inset', `${t}px`);
                         }
 
                         this.setSizes();
@@ -261,11 +273,16 @@ body, html {
     left: 0;
     width: 100vw;
     min-height: 100vh;
-    /* mobile viewport bug fix */
-    /*noinspection CssInvalidPropertyValue*/
-    min-height: -webkit-fill-available;
     position: fixed;
     background: linear-gradient(135deg, rgba(77,158,217,1) 0%, rgba(83,124,218,1) 100%);
+    touch-action: manipulation;
+    overflow: visible;
+}
+
+body.ios, html.ios {
+    height: calc(var(--100vh) + var(--top-inset) + var(--bottom-inset));
+    min-height: calc(var(--100vh) + var(--top-inset) + var(--bottom-inset));
+    border: 5px solid red;
 }
 
 #app {
@@ -275,11 +292,11 @@ body, html {
     width: 100vw;
     top: 0;
     left: 0;
-    bottom: 0;
     right: 0;
+    bottom: 0;
     display: flex;
     flex-direction: column;
-    position: fixed;
+    position: absolute;
     align-items: center;
     justify-content: center;
 }
@@ -354,6 +371,7 @@ body, html {
 }
 
 :root {
+    --top-inset: 0px;
     --bottom-inset: 0px;
     --100vh: 100vh;
 }
@@ -361,6 +379,7 @@ body, html {
 .footer {
     width: 1px;
     min-height: var(--bottom-inset);
+    background: transparent;
 }
 
 button {
@@ -372,6 +391,7 @@ button {
     font-family: 'Pangolin', cursive;
     box-shadow: 0 0 10px #024c82;
     opacity: 0.8;
+    touch-action: manipulation;
 }
 
 button:focus {

@@ -137,12 +137,6 @@ export default Vue.extend({
                         this.bottomInset = b;
                     }
 
-                    let t = Number(command.insets && command.insets.top);
-                    if (t && !Number.isNaN(t)) {
-                        if (t > 150) t /= window.devicePixelRatio; // TODO await fix
-                        document.documentElement.style.setProperty('--top-inset', `${t}px`);
-                    }
-
                     this.setSizes();
                 } else if (command.type === 'smart_app_data') {
                     if (command.action === 'close') {
@@ -276,8 +270,8 @@ body, html {
 }
 
 body.ios, html.ios {
-    height: calc(var(--100vh) + var(--top-inset) + var(--bottom-inset));
-    min-height: calc(var(--100vh) + var(--top-inset) + var(--bottom-inset));
+    height: calc(var(--100vh) + var(--bottom-inset));
+    min-height: calc(var(--100vh) + var(--bottom-inset));
     border: 5px solid red;
 }
 
@@ -289,12 +283,13 @@ body.ios, html.ios {
     top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: -100px;
     display: flex;
     flex-direction: column;
     position: absolute;
     align-items: center;
     justify-content: center;
+    background: green;
 }
 
 #canvas {
@@ -367,7 +362,6 @@ body.ios, html.ios {
 }
 
 :root {
-    --top-inset: 0px;
     --bottom-inset: 0px;
     --100vh: 100vh;
 }

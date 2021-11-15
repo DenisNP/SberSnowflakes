@@ -29,11 +29,11 @@
         </div>
         <canvas key="cv" v-show="!finished && cutStarted" class="centered" id="canvas"/>
         <canvas key="cf" v-show="finished" class="centered" id="cFinal"/>
-        <button v-if="finished" class="restart-btn bottom-button" :class="{ios}" @click="restart">
+        <button v-if="finished" class="restart-btn bottom-button" @click="restart">
             Ещё снежинка
         </button>
-        <div class="footer" :class="{ios}"/>
-        <div class="buttons bottom-button" :class="{ios}">
+        <div class="footer"/>
+        <div class="buttons bottom-button">
             <button
                 v-if="showSkip"
                 class="skip-btn"
@@ -77,7 +77,6 @@ export default Vue.extend({
             informal: false,
             firstStart: true,
             assistant: null,
-            ios: false, // fixing fucking ios safari issues
         };
     },
     computed: {
@@ -92,8 +91,12 @@ export default Vue.extend({
     },
     mounted() {
         // fixing fucking ios safari issues
-        this.ios = !!((/iPad|iPhone|iPod/.test(navigator.platform))
+        const ios = !!((/iPad|iPhone|iPod/.test(navigator.platform))
             || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform)));
+
+        if (ios || true) {
+            document.documentElement.style.setProperty('--100vh', `${window.innerHeight}px`);
+        }
 
         // assistant client
         try {
@@ -257,7 +260,10 @@ body, html {
     top: 0;
     left: 0;
     width: 100vw;
-    height: 100vh;
+    min-height: 100vh;
+    /* mobile viewport bug fix */
+    /*noinspection CssInvalidPropertyValue*/
+    min-height: -webkit-fill-available;
     position: fixed;
     background: linear-gradient(135deg, rgba(77,158,217,1) 0%, rgba(83,124,218,1) 100%);
 }
@@ -338,10 +344,6 @@ body, html {
     bottom: calc(15px + var(--bottom-inset));
 }
 
-.bottom-button.ios {
-    bottom: calc(15px + var(--bottom-inset) / 2);
-}
-
 * {
     box-sizing: border-box;
     user-select: none;
@@ -353,15 +355,12 @@ body, html {
 
 :root {
     --bottom-inset: 0px;
+    --100vh: 100vh;
 }
 
 .footer {
     width: 1px;
     min-height: var(--bottom-inset);
-}
-
-.footer.ios {
-    display: none;
 }
 
 button {
@@ -382,7 +381,7 @@ button:focus {
 }
 
 .folding-container {
-    height: calc(100vh - var(--bottom-inset) - 100px);
+    height: calc(var(--100vh) - var(--bottom-inset) - 100px);
     margin-bottom: 100px;
     display: flex;
     justify-content: center;
@@ -455,10 +454,6 @@ button:focus {
 
     .bottom-button {
         bottom: calc(30px + var(--bottom-inset));
-    }
-
-    .bottom-button.ios {
-        bottom: calc(30px + var(--bottom-inset) / 2);
     }
 }
 

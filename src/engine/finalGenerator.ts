@@ -7,7 +7,7 @@ const createCanvasFiltered = (ctx: CanvasRenderingContext2D, amount: number): HT
     const imageData = ctx.getImageData(0, 0, width, height);
     const { data } = imageData;
 
-    // assume source color is white
+    // change brightness
     for (let i = 0; i < data.length; i += 4) {
         data[i] = Math.floor(data[i] * amount);
         data[i + 1] = Math.floor(data[i + 1] * amount);

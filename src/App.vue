@@ -90,18 +90,6 @@ export default Vue.extend({
         },
     },
     mounted() {
-        // fixing fucking ios safari issues
-        const ios = !!((/iPad|iPhone|iPod/.test(navigator.platform))
-            || (navigator.maxTouchPoints
-                && navigator.maxTouchPoints > 2
-                && /MacIntel/.test(navigator.platform)));
-
-        if (ios) {
-            document.documentElement.style.setProperty('--100vh', `${window.innerHeight}px`);
-            document.documentElement.classList.add('ios');
-            document.body.classList.add('ios');
-        }
-
         // assistant client
         try {
             window.alert = (t) => {
@@ -259,20 +247,11 @@ export default Vue.extend({
 body, html {
     margin: 0;
     padding: 0;
-    top: 0;
-    left: 0;
     width: 100vw;
     min-height: 100vh;
-    position: fixed;
     background: linear-gradient(135deg, rgba(77,158,217,1) 0%, rgba(83,124,218,1) 100%);
     touch-action: manipulation;
-    overflow: visible;
-}
-
-body.ios, html.ios {
-    height: calc(var(--100vh) + var(--bottom-inset));
-    min-height: calc(var(--100vh) + var(--bottom-inset));
-    border: 5px solid red;
+    overflow: hidden;
 }
 
 #app {
@@ -283,13 +262,13 @@ body.ios, html.ios {
     top: 0;
     left: 0;
     right: 0;
-    bottom: -100px;
+    bottom: 0;
     display: flex;
     flex-direction: column;
-    position: absolute;
+    position: fixed;
     align-items: center;
     justify-content: center;
-    background: green;
+    background: transparent;
 }
 
 #canvas {
@@ -363,7 +342,6 @@ body.ios, html.ios {
 
 :root {
     --bottom-inset: 0px;
-    --100vh: 100vh;
 }
 
 .footer {
@@ -391,7 +369,7 @@ button:focus {
 }
 
 .folding-container {
-    height: calc(var(--100vh) - var(--bottom-inset) - 100px);
+    height: calc(100vh - var(--bottom-inset) - 100px);
     margin-bottom: 100px;
     display: flex;
     justify-content: center;

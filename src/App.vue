@@ -254,6 +254,8 @@ export default Vue.extend({
 body, html {
     margin: 0;
     padding: 0;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100vh;
     position: fixed;

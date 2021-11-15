@@ -1,21 +1,30 @@
 import { toRad } from '@/engine/utils';
 
-// fucking Safari iOS again, there is polyfill for ctx.filter
-const applyBrightness = (ctx: CanvasRenderingContext2D, amount: number) => {
+// just dont ask...
+const createCanvasFiltered = (ctx: CanvasRenderingContext2D, amount: number): HTMLCanvasElement => {
+    // get source data
     const { height, width } = ctx.canvas;
     const imageData = ctx.getImageData(0, 0, width, height);
     const { data } = imageData;
-    const { length } = data;
 
-    // assume source color is white
-    for (let i = 0; i < length; i += 4) {
-        data[i] = 255 * amount;
-        data[i + 1] = 255 * amount;
-        data[i + 2] = 255 * amount;
+    // change brightness
+    for (let i = 0; i < data.length; i += 4) {
+        data[i] = Math.floor(data[i] * amount);
+        data[i + 1] = Math.floor(data[i + 1] * amount);
+        data[i + 2] = Math.floor(data[i + 2] * amount);
     }
 
-    // set back image data to context
-    ctx.putImageData(imageData, 0, 0);
+    // create fake canvas
+    const canvas = document.createElement('canvas');
+    document.body.appendChild(canvas);
+    canvas.style.display = 'none';
+    canvas.width = width;
+    canvas.height = height;
+
+    // fill context
+    const context = <CanvasRenderingContext2D>canvas.getContext('2d');
+    context.putImageData(imageData, 0, 0);
+    return canvas;
 };
 
 export default function generateFullSnowflake(): void {
@@ -33,15 +42,25 @@ export default function generateFullSnowflake(): void {
     ctx.scale(scale, scale);
     ctx.translate(canvasFinal.width / (2 * scale), canvasFinal.height / (2 * scale));
 
-    const brightnesses: number[] = [100, 97, 93, 100, 97, 100, 97, 90, 97, 93, 97, 93];
+    // Okay, there is a workaround for fucking Safari, again. Safari cannot use ctx.filter
+    // and also it updates context for only last operation, so we should create a new
+    // canvas element for each desired brightness, draw, and then delete them all.
+    // Yes, it is awful, but people for some reason still use iPhones and other Apple devices.
+    const brightnesses: string[] = ['100', '97', '93', '100', '97', '100', '97', '90', '97', '93', '97', '93'];
+    const canvases: { [key: string]: HTMLCanvasElement; } = {};
+    brightnesses.forEach((b) => {
+        if (!canvases[b]) {
+            canvases[b] = createCanvasFiltered(ctxSrc, Number.parseInt(b, 10) / 100);
+        }
+    });
 
     // clockwise parts
     ctx.rotate(-45 * toRad);
     for (let i = 0; i < 6; i++) {
         // ctx.filter = `brightness(${(brightnesses[i * 2])}%)`; // doesnt work in Safari
-        applyBrightness(ctxSrc, brightnesses[i * 2] / 100);
+        const filteredCanvas = canvases[brightnesses[i * 2]];
         ctx.rotate(60 * toRad);
-        ctx.drawImage(canvasSrc, -w / 2, -h);
+        ctx.drawImage(filteredCanvas, -w / 2, -h);
     }
 
     // counter clockwise parts
@@ -49,11 +68,11 @@ export default function generateFullSnowflake(): void {
     ctx.rotate(-90 * toRad);
     for (let i = 0; i < 6; i++) {
         // ctx.filter = `brightness(${(brightnesses[11 - i * 2])}%)`; // doesnt work in Safari
-        applyBrightness(ctxSrc, brightnesses[11 - i * 2] / 100);
+        const filteredCanvas = canvases[brightnesses[11 - i * 2]];
         ctx.rotate(60 * toRad);
-        ctx.drawImage(canvasSrc, -w / 2, -h);
+        ctx.drawImage(filteredCanvas, -w / 2, -h);
     }
 
-    // revert to white
-    applyBrightness(ctxSrc, 1);
+    // remove all canvases
+    Object.values(canvases).forEach((c) => document.body.removeChild(c));
 }

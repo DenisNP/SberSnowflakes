@@ -16,8 +16,6 @@ const createCanvasFiltered = (ctx: CanvasRenderingContext2D, amount: number): HT
 
     // create fake canvas
     const canvas = document.createElement('canvas');
-    document.body.appendChild(canvas);
-    canvas.style.display = 'none';
     canvas.width = width;
     canvas.height = height;
 
@@ -44,7 +42,7 @@ export default function generateFullSnowflake(): void {
 
     // Okay, there is a workaround for fucking Safari, again. Safari cannot use ctx.filter
     // and also it updates context for only last operation, so we should create a new
-    // canvas element for each desired brightness, draw, and then delete them all.
+    // canvas element for each desired brightness.
     // Yes, it is awful, but people for some reason still use iPhones and other Apple devices.
     const brightnesses: string[] = ['100', '97', '93', '100', '97', '100', '97', '90', '97', '93', '97', '93'];
     const canvases: { [key: string]: HTMLCanvasElement; } = {};
@@ -72,7 +70,4 @@ export default function generateFullSnowflake(): void {
         ctx.rotate(60 * toRad);
         ctx.drawImage(filteredCanvas, -w / 2, -h);
     }
-
-    // remove all canvases
-    Object.values(canvases).forEach((c) => document.body.removeChild(c));
 }

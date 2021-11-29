@@ -85,7 +85,7 @@ export const generateCutout = (segments: Segment[], cutouts: Cutout[]): Cutout |
     // choose center point and sides
     const centerPoint = randomPointWithMargin(segment, margin + minEdgeSegmentLen / 2);
     const shortestSide = Math.min(dist(centerPoint, segment.start), dist(centerPoint, segment.end));
-    const halfSideLen = rand(minEdgeSegmentLen / 2,
+    const halfEdgeSegmentLen = rand(minEdgeSegmentLen / 2,
         Math.min(shortestSide - margin, maxEdgeSegmentLen / 2));
 
     // select angles
@@ -94,10 +94,10 @@ export const generateCutout = (segments: Segment[], cutouts: Cutout[]): Cutout |
     const slantAng = rand(normal - maxSlantAng, normal + maxSlantAng);
 
     // create side segment
-    const topHalf = fromAngAndLen(centerPoint, segmentAng * toRad, halfSideLen);
-    const bottomHalf = fromAngAndLen(centerPoint, (segmentAng + 180) * toRad, halfSideLen);
-    const sideSegment = new Segment(bottomHalf.end, topHalf.end);
-    const fullLen = sideSegment.len;
+    const topHalf = fromAngAndLen(centerPoint, segmentAng * toRad, halfEdgeSegmentLen);
+    const bottomHalf = fromAngAndLen(centerPoint, (segmentAng + 180) * toRad, halfEdgeSegmentLen);
+    const edgeSegment = new Segment(bottomHalf.end, topHalf.end);
+    const fullEdgeSegLen = edgeSegment.len;
 
     // construct segments list to check intersections
     const allSeg = segments.filter((s) => s !== segment)
@@ -105,13 +105,13 @@ export const generateCutout = (segments: Segment[], cutouts: Cutout[]): Cutout |
 
     // maximum length of cutout
     // resolution of steps is twice higher than minimum cutout width
-    const steps = Math.ceil((fullLen * 2) / minEdgeSegmentLen);
-    const stepSize = fullLen / steps;
+    const steps = Math.ceil((fullEdgeSegLen * 2) / minEdgeSegmentLen);
+    const stepSize = fullEdgeSegLen / steps;
     let maxLen = Number.MAX_VALUE;
 
     // create projection for every step
     for (let i = 0; i <= steps; i++) {
-        const startProj = getPointFromStart(sideSegment, (i * stepSize) / fullLen);
+        const startProj = getPointFromStart(edgeSegment, (i * stepSize) / fullEdgeSegLen);
         const proj = fromAngAndLen(startProj, slantAng * toRad, maxProjection);
         const minDist = shortestDist(allSeg, proj);
         if (minDist < maxLen) {
@@ -124,8 +124,12 @@ export const generateCutout = (segments: Segment[], cutouts: Cutout[]): Cutout |
     maxLen -= innerMargin;
 
     // truncate length based on maximum square and maximum stretch
-    maxLen = Math.min(maxLen, maxCutoutSq / halfSideLen, maxCutoutStretch * halfSideLen * 2);
-    const minLen = Math.max(minCutoutLength, minCutoutSq / halfSideLen);
+    maxLen = Math.min(
+        maxLen,
+        maxCutoutSq / halfEdgeSegmentLen,
+        maxCutoutStretch * fullEdgeSegLen,
+    );
+    const minLen = Math.max(minCutoutLength, minCutoutSq / halfEdgeSegmentLen);
 
     // edges are too close
     if (maxLen < minLen) return null;
@@ -155,8 +159,8 @@ export const generateCutout = (segments: Segment[], cutouts: Cutout[]): Cutout |
                 .concat(cutouts.map((c) => c.firstSeg.end));
 
             // create segments to check
-            topSegment = new Segment(sideSegment.end, cutoutMain.end);
-            bottomSegment = new Segment(sideSegment.start, cutoutMain.end);
+            topSegment = new Segment(edgeSegment.end, cutoutMain.end);
+            bottomSegment = new Segment(edgeSegment.start, cutoutMain.end);
             const minDistSP = Math.min(
                 shortestDistBetweenPointsAndSegment(topSegment, allPoints),
                 shortestDistBetweenPointsAndSegment(bottomSegment, allPoints),
@@ -171,17 +175,16 @@ export const generateCutout = (segments: Segment[], cutouts: Cutout[]): Cutout |
         }
     }
 
-    topSegment = topSegment || new Segment(sideSegment.end, cutoutMain.end);
-    bottomSegment = bottomSegment || new Segment(sideSegment.start, cutoutMain.end);
+    topSegment = topSegment || new Segment(edgeSegment.end, cutoutMain.end);
+    bottomSegment = bottomSegment || new Segment(edgeSegment.start, cutoutMain.end);
 
-    // cut segment and put new segment parts if they are long enough
-    segments.splice(segmentIndex, 1);
-    const startSegment = new Segment(segment.start, sideSegment.start);
-    const endSegment = new Segment(sideSegment.end, segment.end);
-    segments.splice(segmentIndex, 0, startSegment, endSegment);
+    // cut segment and put new segment parts back
+    const startSegment = new Segment(segment.start, edgeSegment.start);
+    const endSegment = new Segment(edgeSegment.end, segment.end);
+    segments.splice(segmentIndex, 1, startSegment, endSegment);
 
     // return
-    const cutout = new Cutout(sideSegment, topSegment, bottomSegment);
+    const cutout = new Cutout(edgeSegment, topSegment, bottomSegment);
     cutouts.push(cutout);
     return cutout;
 };

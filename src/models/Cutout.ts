@@ -1,5 +1,4 @@
 import Segment from '@/models/Segment';
-import { calcSquare } from '@/engine/utils';
 import Point from '@/models/Point';
 import CutoutStep from '@/models/CutoutStep';
 
@@ -14,10 +13,6 @@ export default class Cutout {
         this.sideSeg = sideSeg;
         this.firstSeg = firstSeg;
         this.secondSeg = secondSeg;
-    }
-
-    public get square(): number {
-        return calcSquare(this.sideSeg.start, this.sideSeg.end, this.firstSeg.end);
     }
 
     public get points(): Point[] {

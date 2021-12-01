@@ -23,6 +23,7 @@ import { jsPDF } from 'jspdf';
 import {
     init, generate, nextStep, setup,
 } from './snowflake';
+// @ts-ignore
 import schematic from './assets/schematic.jpg';
 
 export default Vue.extend({

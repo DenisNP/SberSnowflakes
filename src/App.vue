@@ -113,13 +113,18 @@ export default Vue.extend({
             // load schema and draw it
             const schImg = new Image();
             schImg.onload = () => {
-                const imgScale = ci.width / schImg.width;
+                const imgScale = Math.min(
+                    (ci.width / scale) / schImg.width,
+                    ((ci.height - ci.width) / scale) / schImg.height,
+                );
+                const imgWidth = schImg.width * imgScale;
+                const imgHeight = schImg.height * imgScale;
                 ctx.drawImage(
                     schImg,
-                    0,
+                    (ci.width / scale - imgWidth) / 2,
                     ci.width / scale,
-                    ci.width / scale,
-                    (schImg.height * imgScale) / scale,
+                    imgWidth,
+                    imgHeight,
                 );
 
                 // create pdf

@@ -23,6 +23,7 @@ import { jsPDF } from 'jspdf';
 import {
     init, generate, nextStep, setup,
 } from './snowflake';
+import schematic from './assets/schematic.jpg';
 
 export default Vue.extend({
     name: 'App',
@@ -109,11 +110,25 @@ export default Vue.extend({
             ctx.lineTo(ci.width / scale, ci.width / scale);
             ctx.stroke();
 
-            // create pdf
-            // eslint-disable-next-line new-cap
-            const doc = new jsPDF();
-            doc.addImage(ci.toDataURL('image/jpeg'), 0, 0, 210, 297);
-            doc.save('snowflake.pdf');
+            // load schema and draw it
+            const schImg = new Image();
+            schImg.onload = () => {
+                const imgScale = ci.width / schImg.width;
+                ctx.drawImage(
+                    schImg,
+                    0,
+                    ci.width / scale,
+                    ci.width / scale,
+                    (schImg.height * imgScale) / scale,
+                );
+
+                // create pdf
+                // eslint-disable-next-line new-cap
+                const doc = new jsPDF();
+                doc.addImage(ci.toDataURL('image/jpeg'), 0, 0, 210, 297);
+                doc.save('snowflake.pdf');
+            };
+            schImg.src = schematic;
         },
     },
 });
